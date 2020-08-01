@@ -1,0 +1,4 @@
+.ipynb_checkpoints/
+**/__pycache__
+det._values.txt
+source_values.txt
