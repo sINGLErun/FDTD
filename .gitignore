@@ -1,6 +1,7 @@
 .ipynb_checkpoints/
 **/__pycache__
-anim.values.txt
+anim._values.txt
+2D_anim._values.txt
 det._values.txt
 det._values0.txt
 det._values1.txt
