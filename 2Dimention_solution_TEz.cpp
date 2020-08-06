@@ -6,9 +6,9 @@
 #include <string>
 
 //-------- modeling constants -----------------------------------------------------------
-	const float SIZE_X_m = 0.1, SIZE_Y_m = 0.1;			// modeling SIZE_% in meters
+	const float SIZE_X_m = 0.2, SIZE_Y_m = 0.1;			// modeling SIZE_% in meters
 	const float TIME_s = 1.1e-9;						// modeling TIME in seconds
-	const float SRC_POS_X_m = SIZE_X_m/2, SRC_POS_Y_m = SIZE_Y_m/2;	// source position in meters
+	const float SRC_POS_X_m = SIZE_X_m/4, SRC_POS_Y_m = SIZE_Y_m/2;	// source position in meters
 	const std::string det_path = "2D_anim._values.txt";
 	const float d = 1e-3; 								// dx = dy = d;
 	const double gauss_w_sec = 2e-11;					// width of gaussian signal
@@ -130,7 +130,7 @@ void dielectric_init(float**& eps, int X, int Y) {
 	for (int i = X/2; i < X; ++i) {
 		eps[i] = new float[Y];
 		for (int j = 0; j < Y; ++j) {
-			eps[i][j] = 1.0;
+			eps[i][j] = 9.0;
 		}
 	}
 }
