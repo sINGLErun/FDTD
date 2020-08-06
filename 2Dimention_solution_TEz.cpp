@@ -5,13 +5,28 @@
 #include <cmath>
 #include <string>
 
-//-------- constant values --------------------------------------------------------------
-	const int SIZE_X = 400;
-	const int SIZE_Y = 400;
-	const int TIME_m = 1500;
-	const int SRC_POS_X = 50, SRC_POS_Y = 50;
+//-------- modeling constants -----------------------------------------------------------
+	const float SIZE_X_m = 0.1, SIZE_Y_m = 0.1;			// modeling SIZE_% in meters
+	const float TIME_s = 1.1e-9;						// modeling TIME in seconds
+	const float SRC_POS_X_m = SIZE_X_m/2, SRC_POS_Y_m = SIZE_Y_m/2;	// source position in meters
 	const std::string det_path = "2D_anim._values.txt";
-	const float W0 = 120*3.14159, Sc = 1.0; // dx = dy = 1;
+	const float d = 1e-3; 								// dx = dy = d;
+	const double gauss_w_sec = 2e-11;					// width of gaussian signal
+	const double gauss_d_sec = 2.5 * gauss_w_sec;		// delay of gaussian signal
+
+//-------- physical constants -----------------------------------------------------------
+	const double mu0 = 3.14159 * 4e-7;
+	const double eps0 = 8.854187817e-12;
+	const double c = 1/sqrt(mu0 * eps0);
+
+//-------- discrete modeling constants ---------------------------------------------------
+	const float dt = 1/sqrt(2) * d / c;
+	const float W0 = 120 * 3.14159;
+	const int TIME = ceil(TIME_s / dt);
+	const int SIZE_X = ceil(SIZE_X_m / d), SIZE_Y = ceil(SIZE_Y_m / d);
+	const int SRC_POS_X = ceil(SRC_POS_X_m / d), SRC_POS_Y = ceil(SRC_POS_Y_m / d);
+	const int gauss_w = gauss_w_sec / dt;
+	const int gauss_d = gauss_d_sec / dt;
 
 //-------- usable functions -------------------------------------------------------------
 	void component_init(float**&, int X, int Y);
@@ -33,17 +48,17 @@ int main(int argc, char const *argv[])
 	
 	fout.open(det_path);
 	assert(fout.is_open() && "anim._values.txt wasn't open for writing");
-	fout << TIME_m << "\n";
-	fout << SIZE_X << "\n";
+	fout << TIME << "\n";
+	fout << SIZE_X << " " << SIZE_Y << " \n";
 	fout << std::setprecision(6) << std::fixed;
 
 //-------- main circle ------------------------------------------------------------------
-	for (int t = 0; t < TIME_m; ++t) {
+	for (int t = 0; t < TIME; ++t) {
 
 //-------- find Hx[i,j+1/2] at t+1/2 ----------------------------------------------------
 		for (int i = 0; i < SIZE_X; ++i) {
 			for (int j = 0; j < SIZE_Y-1; ++j) {
-				Hx[i][j] += - (Ez[i][j+1] - Ez[i][j]) * (Sc/W0);
+				Hx[i][j] += - (Ez[i][j+1] - Ez[i][j]) * dt/(mu0*d);
 			}
 		}
 
@@ -52,7 +67,7 @@ int main(int argc, char const *argv[])
 //-------- find Hy[i+1/2,j] at t+1/2 ----------------------------------------------------
 		for (int i = 0; i < SIZE_X-1; ++i) {
 			for (int j = 0; j < SIZE_Y; ++j) {
-				Hy[i][j] += + (Ez[i+1][j] - Ez[i][j]) * (Sc/W0);
+				Hy[i][j] += + (Ez[i+1][j] - Ez[i][j]) * dt/(mu0*d);
 			}
 		}
 
@@ -61,15 +76,13 @@ int main(int argc, char const *argv[])
 //-------- find Ez[i,j] at t ------------------------------------------------------------
 		for (int i = 1; i < SIZE_X-1; ++i) {
 			for (int j = 1; j < SIZE_Y-1; ++j) {
-				Ez[i][j] = Ez[i][j] + (Hy[i][j] - Hy[i-1][j]) * (Sc*W0) / (eps[i][j]) - //+ eps[i-1][j])/2
-									  (Hx[i][j] - Hx[i][j-1]) * (Sc*W0) / (eps[i][j]);  //+ eps[i][j-1])/2
+				Ez[i][j] = Ez[i][j] + (Hy[i][j] - Hy[i-1][j]) * dt/(eps[i][j]*eps0*d) - //+ eps[i-1][j])/2
+									  (Hx[i][j] - Hx[i][j-1]) * dt/(eps[i][j]*eps0*d);  //+ eps[i][j-1])/2
 			}
 		}
 
-		Ez[SRC_POS_X][SRC_POS_Y] += exp(-(t - 30.0)*(t - 30.0)/100.0);
+		Ez[SRC_POS_X][SRC_POS_Y] += exp(-(t-gauss_d)*(t-gauss_d) / (gauss_w*gauss_w));
 		
-//-------- reflective boundary conditions ------------------------------------------------
-
 		write_2Darray(Ez, SIZE_X, SIZE_Y, fout);
 	}
 
@@ -81,7 +94,6 @@ int main(int argc, char const *argv[])
 	
 	return 0;
 }
-
 
 
 //-------- function descriptions --------------------------------------------------------
@@ -118,24 +130,23 @@ void dielectric_init(float**& eps, int X, int Y) {
 	for (int i = X/2; i < X; ++i) {
 		eps[i] = new float[Y];
 		for (int j = 0; j < Y; ++j) {
-			eps[i][j] = 9.0;
+			eps[i][j] = 1.0;
 		}
 	}
 }
 
 void write_2Darray(float**& arr, int X, int Y, std::ofstream &os) {
-	/*
-	os << X << " " << Y << "\n";
 	for (int i = 0; i < X; ++i) {
 		for (int j = 0; j < Y; ++j) {
-			os << arr[i][j] << ", ";
+			os << arr[i][j] << ",";
 		}
-		os << "\n";
+		os << " ";
+	}
+	os << "\n";
+	/*
+	for (int i = 0; i < X; ++i) {
+		os << arr[i][100] << " ";
 	}
 	os << "\n";
 	*/
-	for (int i = 0; i < X; ++i) {
-		os << arr[i][50] << " ";
-	}
-	os << "\n";
 }
