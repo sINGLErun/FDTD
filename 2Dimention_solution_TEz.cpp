@@ -8,7 +8,7 @@
 //-------- modeling constants -----------------------------------------------------------
 	const float SIZE_X_m = 0.2, SIZE_Y_m = 0.1;			// modeling SIZE_% in meters
 	const float TIME_s = 1.1e-9;						// modeling TIME in seconds
-	const float SRC_POS_X_m = SIZE_X_m/4, SRC_POS_Y_m = SIZE_Y_m/2;	// source position in meters
+	const float SRC_POS_X_m = SIZE_X_m/2, SRC_POS_Y_m = SIZE_Y_m/2;	// source position in meters
 	const std::string det_path = "2D_anim._values.txt";
 	const float d = 1e-3; 								// dx = dy = d;
 	const double gauss_w_sec = 2e-11;					// width of gaussian signal
@@ -47,13 +47,13 @@ int main(int argc, char const *argv[])
 
 	
 	fout.open(det_path);
-	assert(fout.is_open() && "anim._values.txt wasn't open for writing");
+	assert(fout.is_open() && "2D_anim._values.txt wasn't open for writing");
 	fout << TIME << "\n";
 	fout << SIZE_X << " " << SIZE_Y << " \n";
 	fout << std::setprecision(6) << std::fixed;
 
 //-------- main circle ------------------------------------------------------------------
-	for (int t = 0; t < TIME; ++t) {
+	for (int t = 1; t < TIME; ++t) {
 
 //-------- find Hx[i,j+1/2] at t+1/2 ----------------------------------------------------
 		for (int i = 0; i < SIZE_X; ++i) {
@@ -62,16 +62,12 @@ int main(int argc, char const *argv[])
 			}
 		}
 
-		//Hy[SRC_POS - 1] += -exp(-(t - 30.0)*(t - 30.0)/100.0)/W0;
-
 //-------- find Hy[i+1/2,j] at t+1/2 ----------------------------------------------------
 		for (int i = 0; i < SIZE_X-1; ++i) {
 			for (int j = 0; j < SIZE_Y; ++j) {
 				Hy[i][j] += + (Ez[i+1][j] - Ez[i][j]) * dt/(mu0*d);
 			}
 		}
-
-		//Hy[SRC_POS - 1] += -exp(-(t - 30.0)*(t - 30.0)/100.0)/W0;
 
 //-------- find Ez[i,j] at t ------------------------------------------------------------
 		for (int i = 1; i < SIZE_X-1; ++i) {
@@ -81,9 +77,21 @@ int main(int argc, char const *argv[])
 			}
 		}
 
-		Ez[SRC_POS_X][SRC_POS_Y] += exp(-(t-gauss_d)*(t-gauss_d) / (gauss_w*gauss_w));
-		
+//-------- cilyndrical wave -------------------------------------------------------------
+		Hy[SRC_POS_X][SRC_POS_Y] += exp(2/t)*exp(-(t-gauss_d)*(t-gauss_d) / (gauss_w*gauss_w));
+
+//-------- plane wave -------------------------------------------------------------------
+//		for (int j = 0; j < SIZE_Y; ++j) {
+//			Ez[SRC_POS_X][j] += exp(-(t-gauss_d)*(t-gauss_d) / (gauss_w*gauss_w));
+//		}
+
+//-------- sin wave ---------------------------------------------------------------------
+//		for (int j = 0; j < SIZE_Y; ++j) {
+//			Ez[SRC_POS_X][j] += exp(-2/t) * 5*sin(0.5*t - 10*d*SRC_POS_X);
+//		}
+
 		write_2Darray(Ez, SIZE_X, SIZE_Y, fout);
+
 	}
 
 	fout.close();
@@ -130,7 +138,7 @@ void dielectric_init(float**& eps, int X, int Y) {
 	for (int i = X/2; i < X; ++i) {
 		eps[i] = new float[Y];
 		for (int j = 0; j < Y; ++j) {
-			eps[i][j] = 9.0;
+			eps[i][j] = 1.0;
 		}
 	}
 }
@@ -143,10 +151,4 @@ void write_2Darray(float**& arr, int X, int Y, std::ofstream &os) {
 		os << " ";
 	}
 	os << "\n";
-	/*
-	for (int i = 0; i < X; ++i) {
-		os << arr[i][100] << " ";
-	}
-	os << "\n";
-	*/
 }
