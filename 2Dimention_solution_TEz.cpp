@@ -8,7 +8,7 @@
 //-------- modeling constants -----------------------------------------------------------
 	const float SIZE_X_m = 0.2, SIZE_Y_m = 0.1;			// modeling SIZE_% in meters
 	const float TIME_s = 1.1e-9;						// modeling TIME in seconds
-	const float SRC_POS_X_m = SIZE_X_m/2, SRC_POS_Y_m = SIZE_Y_m/2;	// source position in meters
+	const float SRC_POS_X_m = SIZE_X_m/4, SRC_POS_Y_m = SIZE_Y_m/2;	// source position in meters
 	const std::string det_path = "2D_anim._values.txt";
 	const float d = 1e-3; 								// dx = dy = d;
 	const double gauss_w_sec = 2e-11;					// width of gaussian signal
@@ -53,7 +53,7 @@ int main(int argc, char const *argv[])
 	fout << std::setprecision(6) << std::fixed;
 
 //-------- main circle ------------------------------------------------------------------
-	for (int t = 1; t < TIME; ++t) {
+	for (int t = 0; t < TIME; ++t) {
 
 //-------- find Hx[i,j+1/2] at t+1/2 ----------------------------------------------------
 		for (int i = 0; i < SIZE_X; ++i) {
@@ -72,13 +72,18 @@ int main(int argc, char const *argv[])
 //-------- find Ez[i,j] at t ------------------------------------------------------------
 		for (int i = 1; i < SIZE_X-1; ++i) {
 			for (int j = 1; j < SIZE_Y-1; ++j) {
-				Ez[i][j] = Ez[i][j] + (Hy[i][j] - Hy[i-1][j]) * dt/(eps[i][j]*eps0*d) - //+ eps[i-1][j])/2
-									  (Hx[i][j] - Hx[i][j-1]) * dt/(eps[i][j]*eps0*d);  //+ eps[i][j-1])/2
+				Ez[i][j] = Ez[i][j] + ((Hy[i][j] - Hy[i-1][j]) -
+									  (Hx[i][j] - Hx[i][j-1])) * dt/(eps[i][j]*eps0*d);  //+ eps[i][j-1])/2
 			}
 		}
 
 //-------- cilyndrical wave -------------------------------------------------------------
-		Hy[SRC_POS_X][SRC_POS_Y] += exp(2/t)*exp(-(t-gauss_d)*(t-gauss_d) / (gauss_w*gauss_w));
+		//Hy[SRC_POS_X][SRC_POS_Y] += exp(3/(t+5))*exp(-(t-gauss_d)*(t-gauss_d) / (gauss_w*gauss_w));
+		//Hx[SRC_POS_X][SRC_POS_Y] += exp(3/(t+5))*exp(-(t-gauss_d)*(t-gauss_d) / (gauss_w*gauss_w));
+		Ez[SRC_POS_X][SRC_POS_Y] += exp(-(t-gauss_d)*(t-gauss_d) / (gauss_w*gauss_w));
+		
+
+		
 
 //-------- plane wave -------------------------------------------------------------------
 //		for (int j = 0; j < SIZE_Y; ++j) {
@@ -87,7 +92,7 @@ int main(int argc, char const *argv[])
 
 //-------- sin wave ---------------------------------------------------------------------
 //		for (int j = 0; j < SIZE_Y; ++j) {
-//			Ez[SRC_POS_X][j] += exp(-2/t) * 5*sin(0.5*t - 10*d*SRC_POS_X);
+//			Ez[SRC_POS_X][j] += exp(2/(t + 5)) * 5*sin(0.5*t - 10*d*SRC_POS_X);
 //		}
 
 		write_2Darray(Ez, SIZE_X, SIZE_Y, fout);
@@ -138,7 +143,7 @@ void dielectric_init(float**& eps, int X, int Y) {
 	for (int i = X/2; i < X; ++i) {
 		eps[i] = new float[Y];
 		for (int j = 0; j < Y; ++j) {
-			eps[i][j] = 1.0;
+			eps[i][j] = 9.0;
 		}
 	}
 }
