@@ -67,7 +67,7 @@ int main(int argc, char const *argv[]) {
 
 //-------- find Ex[i+1/2,j] at t+1 ------------------------------------------------------
 		for (int i = 0; i < SIZE_X-1; ++i) { // if you want to use ABC you need to have field component defined at the boundary
-			for (int j = 1; j < SIZE_Y-1; ++j) {	
+			for (int j = 1; j < SIZE_Y-1; ++j) {	 
 				assert((j-1)>=0 && "Ex[i+1/2,j] Out of boundary");
 				Ex[i][j] += + (Hz[i][j] - Hz[i][j-1]) * dt/(eps[i][j]*eps0*d);
 			}
@@ -81,7 +81,7 @@ int main(int argc, char const *argv[]) {
 			}
 		}
 
-		Hz[SRC_POS_X][SRC_POS_Y] += exp(-(t-gauss_d)*(t-gauss_d) / (gauss_w*gauss_w));
+		Hz[SRC_POS_X][SRC_POS_Y] += (exp(-5/(t+0.001)/(t+0.001)) + exp(-5/((t-TIME))*(t-TIME)*(t-TIME)))*5*exp(-(t-gauss_d)*(t-gauss_d) / (gauss_w*gauss_w));
 		
 		write_2Darray(Hz, SIZE_X-1, SIZE_Y-1, fout);
 	}
